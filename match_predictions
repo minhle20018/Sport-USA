@@ -1,0 +1,14 @@
+from fastapi import FastAPI
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+
+app = FastAPI()
+engine = create_engine("sqlite:///sports_bettor.db")
+SessionLocal = sessionmaker(bind=engine)
+
+@app.get("/api/daily-picks")
+def get_daily_picks():
+    session = SessionLocal()
+    predictions = session.query(MatchPrediction).all()
+    session.close()
+    return predictions

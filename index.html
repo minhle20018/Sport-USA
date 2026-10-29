@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VMAH US Sports AI - Advanced Value Betting Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0f19',
+                        cardBg: '#131c2e',
+                        cardBorder: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-darkBg text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Top Navigation (Tràn rộng tối đa màn hình) -->
+    <header class="sticky top-0 z-50 bg-cardBg/90 backdrop-blur-md border-b border-cardBorder w-full px-6">
+        <div class="max-w-full mx-auto h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <img src="logo.png" alt="VMAH Logo" class="w-12 h-12 object-cover rounded-xl shadow-lg border border-emerald-500/30">
+                <div>
+                    <span class="text-xl font-extrabold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">VMAH US Sports AI</span>
+                    <span class="block text-xs uppercase font-semibold text-slate-400">Multi-League Edge & O/U Engine</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <!-- Bộ lọc chọn ngày (Bấm vào chọn lịch) và tìm tên đội -->
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <input type="date" id="searchDate" onchange="filterMatches()" title="Chọn ngày thi đấu"
+                            class="bg-slate-900 border border-cardBorder text-slate-200 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                    </div>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                            <i class="fa-solid fa-search text-sm"></i>
+                        </span>
+                        <input type="text" id="searchInput" oninput="filterMatches()" placeholder="Tìm tên đội..." 
+                            class="bg-slate-900 border border-cardBorder text-slate-200 text-sm rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-emerald-500 w-44 md:w-64">
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-1.5 bg-slate-900 p-1 rounded-xl border border-cardBorder">
+                    <button onclick="setLanguage('vi')" id="lang-vi" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white transition-all">VI</button>
+                    <button onclick="setLanguage('en')" id="lang-en" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 transition-all">EN</button>
+                </div>
+
+                <button onclick="fetchLiveBackendData()" class="p-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all shadow-md" title="Refresh"><i class="fa-solid fa-arrows-rotate"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content (Tràn màn hình với dạng lưới grid hiện đại) -->
+    <main class="flex-grow w-full px-6 py-8">
+        <div class="flex justify-between items-center mb-8 bg-cardBg/40 border border-cardBorder p-6 rounded-2xl shadow-xl">
+            <div>
+                <h1 class="text-3xl font-extrabold text-white mb-1" data-i18n="picksTitle">Kèo Thể Thao Mỹ & Dự Đoán AI</h1>
+                <p class="text-slate-400 text-base" data-i18n="picksSubtitle">Hệ thống phân tích tự động toàn diện các giải đấu nước Mỹ</p>
+            </div>
+            <span class="px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold border border-emerald-500/30 shadow-md">🟢 Live API Connected (Auto-refresh)</span>
+        </div>
+
+        <!-- Matches Container (Lưới hiển thị rộng rãi) -->
+        <div id="matchesContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div class="text-center py-16 text-slate-400 col-span-full text-lg">Đang tải dữ liệu từ FastAPI Backend...</div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-cardBorder bg-cardBg/50 py-6 text-center text-xs text-slate-500 w-full">
+        <p>VMAH AI Solutions &copy; 2026. Chơi có trách nhiệm (18+).</p>
+    </footer>
+
+    <!-- Script Logic -->
+    <script>
+        const i18n = {
+            vi: { 
+                picksTitle: "Kèo Thể Thao Mỹ & Dự Đoán AI", 
+                picksSubtitle: "Hệ thống phân tích tự động toàn diện các giải đấu nước Mỹ",
+                searchPlaceholder: "Tìm tên đội..."
+            },
+            en: { 
+                picksTitle: "US Sports Value Bets & AI Predictions", 
+                picksSubtitle: "Automated multi-league analysis across US sports",
+                searchPlaceholder: "Search team..."
+            }
+        };
+        let currentLang = 'vi';
+        let matchesData = [];
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('lang-vi').className = lang === 'vi' ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white transition-all' : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 transition-all';
+            document.getElementById('lang-en').className = lang === 'en' ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white transition-all' : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 transition-all';
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(i18n[currentLang][key]) el.innerText = i18n[currentLang][key];
+            });
+
+            document.getElementById('searchInput').placeholder = i18n[currentLang].searchPlaceholder;
+            filterMatches();
+        }
+
+        async function fetchLiveBackendData() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/daily-picks');
+                const data = await response.json();
+                matchesData = data;
+                filterMatches();
+            } catch (err) {
+                console.error("Lỗi kết nối Backend:", err);
+                document.getElementById('matchesContainer').innerHTML = `<div class="text-center py-16 text-red-400 col-span-full text-lg">⚠️ Không thể kết nối FastAPI. Hãy đảm bảo server đang chạy!</div>`;
+            }
+        }
+
+        function filterMatches() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const selectedDate = document.getElementById('searchDate').value;
+            const container = document.getElementById('matchesContainer');
+            
+            const filtered = matchesData.filter(m => {
+                const home = (m.home_team || "").toLowerCase();
+                const away = (m.away_team || "").toLowerCase();
+                const timeStr = (m.commence_time || "");
+                const sport = (m.sport || "").toLowerCase();
+
+                const matchesKeyword = home.includes(keyword) || away.includes(keyword) || sport.includes(keyword);
+                const matchesDate = selectedDate ? timeStr.includes(selectedDate) : true;
+
+                return matchesKeyword && matchesDate;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp!</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(m => {
+                const isHomeBetter = m.ai_home_prob >= m.ai_away_prob;
+                const chosenTeam = isHomeBetter ? m.home_team : m.away_team;
+                const chosenProb = isHomeBetter ? m.ai_home_prob : m.ai_away_prob;
+                const edgeVal = isHomeBetter ? m.edge_home : m.edge_away;
+
+                return `
+                    <div class="bg-cardBg border border-cardBorder rounded-2xl p-6 shadow-xl flex flex-col justify-between hover:border-emerald-500/40 transition-all">
+                        <div>
+                            <div class="flex justify-between items-center border-b border-cardBorder pb-4 mb-4">
+                                <span class="text-xs font-semibold text-slate-400">🏆 Giải: <strong class="text-cyan-400 uppercase">${m.sport}</strong> | 📅 ${m.commence_time} | Nhà cái: <strong class="text-white">${m.bookmaker}</strong></span>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">${m.recommendation}</span>
+                            </div>
+                            <div class="flex justify-between items-center font-extrabold text-xl mb-5 text-white">
+                                <span>🏠 ${m.home_team} <span class="text-slate-500 font-normal text-base mx-2">vs</span> ✈️ ${m.away_team}</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
+                            <div class="bg-slate-900/80 p-4 rounded-xl border border-cardBorder shadow-inner">
+                                <span class="text-[11px] uppercase font-bold text-slate-400 block mb-1.5">🎯 KÈO ĐỘI THẮNG (MONEYLINE)</span>
+                                <div class="text-emerald-400 font-bold text-base">${chosenTeam}</div>
+                                <div class="text-xs text-slate-300 mt-1.5">Xác suất AI: <strong>${chosenProb}%</strong> | Edge: <span class="${edgeVal >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">${edgeVal >= 0 ? '+' : ''}${edgeVal}%</span></div>
+                            </div>
+                            <div class="bg-slate-900/80 p-4 rounded-xl border border-cardBorder shadow-inner">
+                                <span class="text-[11px] uppercase font-bold text-slate-400 block mb-1.5">📊 KÈO TÀI XỈU (OVER/UNDER)</span>
+                                <div class="text-cyan-400 font-bold text-base">${m.ou_recommendation}</div>
+                                <div class="text-xs text-slate-300 mt-1.5">Mức nhà cái: <strong>${m.ou_line}</strong> | AI Dự đoán: <strong>${m.ai_predicted_total}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.onload = function() {
+            fetchLiveBackendData();
+            setInterval(fetchLiveBackendData, 300000);
+        };
+    </script>
+</body>
+</html>
