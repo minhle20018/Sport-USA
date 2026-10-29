@@ -31,7 +31,6 @@ def get_daily_picks():
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # Lấy dữ liệu từ bảng picks (hoặc đổi tên bảng nếu database của bạn đặt tên khác)
         cursor.execute("SELECT * FROM picks")
         rows = cursor.fetchall()
         conn.close()
