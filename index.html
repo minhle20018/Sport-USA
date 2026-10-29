@@ -141,7 +141,7 @@
                     matchesData = data;
                     filterMatches();
                 } else {
-                    document.getElementById('matchesContainer').innerHTML = `<div class="text-center py-16 text-amber-400 col-span-full text-lg">⚠️ Chưa có dữ liệu trận đấu nào từ database! Hãy đẩy file sports_bettor.db lên.</div>`;
+                    document.getElementById('matchesContainer').innerHTML = `<div class="text-center py-16 text-amber-400 col-span-full text-lg">⚠️ File picks.json chưa có dữ liệu hoặc trống! Hãy chạy worker quét kèo.</div>`;
                 }
             } catch (err) {
                 console.error("Lỗi kết nối Backend:", err);
@@ -180,7 +180,7 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp trong mục này!</div>`;
+                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp!</div>`;
                 return;
             }
 
