@@ -29,7 +29,7 @@
     <header class="sticky top-0 z-50 bg-cardBg/90 backdrop-blur-md border-b border-cardBorder w-full px-6">
         <div class="max-w-full mx-auto h-20 flex items-center justify-between">
             <div class="flex items-center space-x-4">
-                <img src="logo.png" alt="VMAH Logo" class="w-12 h-12 object-cover rounded-xl shadow-lg border border-emerald-500/30">
+                <img src="logo.png" alt="VMAH Logo" class="w-12 h-12 object-cover rounded-xl shadow-lg border border-emerald-500/30" onerror="this.style.display='none'">
                 <div>
                     <span class="text-xl font-extrabold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">VMAH US Sports AI</span>
                     <span class="block text-xs uppercase font-semibold text-slate-400">Multi-League Edge & O/U Engine</span>
@@ -75,11 +75,12 @@
         <div class="flex flex-wrap items-center gap-2 mb-8" id="leagueTabs">
             <button onclick="filterByLeague('ALL')" id="tab-ALL" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-white shadow-lg transition-all">🌟 Tất cả giải đấu</button>
             <button onclick="filterByLeague('NBA')" id="tab-NBA" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🏀 NBA</button>
-            <button onclick="filterByLeague('NCAAB')" id="tab-NCAAB" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🎓 NCAA Basketball (Đại học)</button>
+            <button onclick="filterByLeague('NCAAB')" id="tab-NCAAB" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🎓 NCAA Basketball</button>
             <button onclick="filterByLeague('NFL')" id="tab-NFL" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🏈 NFL</button>
-            <button onclick="filterByLeague('NCAAF')" id="tab-NCAAF" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🎓 NCAA Football (Đại học)</button>
+            <button onclick="filterByLeague('NCAAF')" id="tab-NCAAF" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🎓 NCAA Football</button>
             <button onclick="filterByLeague('NHL')" id="tab-NHL" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🏒 NHL</button>
             <button onclick="filterByLeague('MLB')" id="tab-MLB" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">⚾ MLB</button>
+            <button onclick="filterByLeague('MLS')" id="tab-MLS" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">⚽ MLS</button>
         </div>
 
         <!-- Matches Container -->
@@ -117,7 +118,7 @@
 
         function filterByLeague(league) {
             selectedLeague = league;
-            ['ALL', 'NBA', 'NCAAB', 'NFL', 'NCAAF', 'NHL', 'MLB'].forEach(l => {
+            ['ALL', 'NBA', 'NCAAB', 'NFL', 'NCAAF', 'NHL', 'MLB', 'MLS'].forEach(l => {
                 const btn = document.getElementById(`tab-${l}`);
                 if (btn) {
                     if (l === league) {
@@ -140,7 +141,7 @@
                     matchesData = data;
                     filterMatches();
                 } else {
-                    document.getElementById('matchesContainer').innerHTML = `<div class="text-center py-16 text-amber-400 col-span-full text-lg">⚠️ Không có dữ liệu trận đấu nào được trả về từ API!</div>`;
+                    document.getElementById('matchesContainer').innerHTML = `<div class="text-center py-16 text-amber-400 col-span-full text-lg">⚠️ Chưa có dữ liệu trận đấu nào từ database! Hãy đẩy file sports_bettor.db lên.</div>`;
                 }
             } catch (err) {
                 console.error("Lỗi kết nối Backend:", err);
@@ -161,13 +162,25 @@
 
                 const matchesKeyword = home.includes(keyword) || away.includes(keyword) || sport.toLowerCase().includes(keyword);
                 const matchesDate = selectedDate ? timeStr.includes(selectedDate) : true;
-                const matchesLeague = (selectedLeague === 'ALL') || sport.includes(selectedLeague);
+                
+                let matchesLeague = true;
+                if (selectedLeague !== 'ALL') {
+                    if (selectedLeague === 'MLS') {
+                        matchesLeague = sport.includes('MLS') || sport.includes('SOCCER');
+                    } else if (selectedLeague === 'NCAAB') {
+                        matchesLeague = sport.includes('NCAAB') || sport.includes('BASKETBALL_NCAA');
+                    } else if (selectedLeague === 'NCAAF') {
+                        matchesLeague = sport.includes('NCAAF') || sport.includes('AMERICANFOOTBALL_NCAA');
+                    } else {
+                        matchesLeague = sport.includes(selectedLeague);
+                    }
+                }
 
                 return matchesKeyword && matchesDate && matchesLeague;
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp trong giải này!</div>`;
+                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp trong mục này!</div>`;
                 return;
             }
 
