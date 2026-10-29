@@ -25,7 +25,7 @@
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <!-- Top Navigation (Tràn rộng tối đa màn hình) -->
+    <!-- Top Navigation -->
     <header class="sticky top-0 z-50 bg-cardBg/90 backdrop-blur-md border-b border-cardBorder w-full px-6">
         <div class="max-w-full mx-auto h-20 flex items-center justify-between">
             <div class="flex items-center space-x-4">
@@ -37,7 +37,6 @@
             </div>
             
             <div class="flex items-center space-x-4">
-                <!-- Bộ lọc chọn ngày (Bấm vào chọn lịch) và tìm tên đội -->
                 <div class="flex items-center space-x-3">
                     <div class="relative">
                         <input type="date" id="searchDate" onchange="filterMatches()" title="Chọn ngày thi đấu"
@@ -62,19 +61,30 @@
         </div>
     </header>
 
-    <!-- Main Content (Tràn màn hình với dạng lưới grid hiện đại) -->
+    <!-- Main Content -->
     <main class="flex-grow w-full px-6 py-8">
-        <div class="flex justify-between items-center mb-8 bg-cardBg/40 border border-cardBorder p-6 rounded-2xl shadow-xl">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-cardBg/40 border border-cardBorder p-6 rounded-2xl shadow-xl gap-4">
             <div>
                 <h1 class="text-3xl font-extrabold text-white mb-1" data-i18n="picksTitle">Kèo Thể Thao Mỹ & Dự Đoán AI</h1>
                 <p class="text-slate-400 text-base" data-i18n="picksSubtitle">Hệ thống phân tích tự động toàn diện các giải đấu nước Mỹ</p>
             </div>
-            <span class="px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold border border-emerald-500/30 shadow-md">🟢 Live API Connected (Auto-refresh)</span>
+            <span class="px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold border border-emerald-500/30 shadow-md">🟢 Live API Connected (Render Cloud)</span>
         </div>
 
-        <!-- Matches Container (Lưới hiển thị rộng rãi) -->
+        <!-- THANH LỌC THEO GIẢI ĐẤU (LEAGUE TABS) -->
+        <div class="flex flex-wrap items-center gap-2 mb-8" id="leagueTabs">
+            <button onclick="filterByLeague('ALL')" id="tab-ALL" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-white shadow-lg transition-all">🌟 Tất cả giải đấu</button>
+            <button onclick="filterByLeague('NBA')" id="tab-NBA" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🏀 NBA</button>
+            <button onclick="filterByLeague('NCAAB')" id="tab-NCAAB" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🎓 NCAA Basketball (Đại học)</button>
+            <button onclick="filterByLeague('NFL')" id="tab-NFL" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🏈 NFL</button>
+            <button onclick="filterByLeague('NCAAF')" id="tab-NCAAF" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🎓 NCAA Football (Đại học)</button>
+            <button onclick="filterByLeague('NHL')" id="tab-NHL" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🏒 NHL</button>
+            <button onclick="filterByLeague('MLB')" id="tab-MLB" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">⚾ MLB</button>
+        </div>
+
+        <!-- Matches Container -->
         <div id="matchesContainer" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div class="text-center py-16 text-slate-400 col-span-full text-lg">Đang tải dữ liệu từ FastAPI Backend...</div>
+            <div class="text-center py-16 text-slate-400 col-span-full text-lg">Đang tải dữ liệu từ Render Cloud Backend...</div>
         </div>
     </main>
 
@@ -86,19 +96,12 @@
     <!-- Script Logic -->
     <script>
         const i18n = {
-            vi: { 
-                picksTitle: "Kèo Thể Thao Mỹ & Dự Đoán AI", 
-                picksSubtitle: "Hệ thống phân tích tự động toàn diện các giải đấu nước Mỹ",
-                searchPlaceholder: "Tìm tên đội..."
-            },
-            en: { 
-                picksTitle: "US Sports Value Bets & AI Predictions", 
-                picksSubtitle: "Automated multi-league analysis across US sports",
-                searchPlaceholder: "Search team..."
-            }
+            vi: { picksTitle: "Kèo Thể Thao Mỹ & Dự Đoán AI", picksSubtitle: "Hệ thống phân tích tự động toàn diện các giải đấu nước Mỹ", searchPlaceholder: "Tìm tên đội..." },
+            en: { picksTitle: "US Sports Value Bets & AI Predictions", picksSubtitle: "Automated multi-league analysis across US sports", searchPlaceholder: "Search team..." }
         };
         let currentLang = 'vi';
         let matchesData = [];
+        let selectedLeague = 'ALL';
 
         function setLanguage(lang) {
             currentLang = lang;
@@ -109,25 +112,38 @@
                 const key = el.getAttribute('data-i18n');
                 if(i18n[currentLang][key]) el.innerText = i18n[currentLang][key];
             });
-
             document.getElementById('searchInput').placeholder = i18n[currentLang].searchPlaceholder;
+        }
+
+        function filterByLeague(league) {
+            selectedLeague = league;
+            ['ALL', 'NBA', 'NCAAB', 'NFL', 'NCAAF', 'NHL', 'MLB'].forEach(l => {
+                const btn = document.getElementById(`tab-${l}`);
+                if (btn) {
+                    if (l === league) {
+                        btn.className = "px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-white shadow-lg transition-all";
+                    } else {
+                        btn.className = "px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all";
+                    }
+                }
+            });
             filterMatches();
         }
 
-    async function fetchLiveBackendData() {
-    try {
-        const response = await fetch('https://vmah-sports-ai.onrender.com/api/daily-picks');
-        const data = await response.json();
-        matchesData = data;
-        filterMatches();
-    } catch (err) {
-        console.error("Lỗi kết nối Backend:", err);
-        document.getElementById('matchesContainer').innerHTML = `<div class="text-center py-16 text-red-400 col-span-full text-lg">⚠️ Không thể kết nối Render Backend!</div>`;
-    }
-}
+        async function fetchLiveBackendData() {
+            try {
+                const response = await fetch('https://vmah-sports-ai.onrender.com/api/daily-picks');
+                const data = await response.json();
+                matchesData = data;
+                filterMatches();
+            } catch (err) {
+                console.error("Lỗi kết nối Backend:", err);
+                document.getElementById('matchesContainer').innerHTML = `<div class="text-center py-16 text-red-400 col-span-full text-lg">⚠️ Không thể kết nối Render Backend!</div>`;
+            }
+        }
 
         function filterMatches() {
-            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const keyword = document.getElementById('searchInput'].value.toLowerCase();
             const selectedDate = document.getElementById('searchDate').value;
             const container = document.getElementById('matchesContainer');
             
@@ -135,16 +151,17 @@
                 const home = (m.home_team || "").toLowerCase();
                 const away = (m.away_team || "").toLowerCase();
                 const timeStr = (m.commence_time || "");
-                const sport = (m.sport || "").toLowerCase();
+                const sport = (m.sport || "").toUpperCase();
 
-                const matchesKeyword = home.includes(keyword) || away.includes(keyword) || sport.includes(keyword);
+                const matchesKeyword = home.includes(keyword) || away.includes(keyword) || sport.toLowerCase().includes(keyword);
                 const matchesDate = selectedDate ? timeStr.includes(selectedDate) : true;
+                const matchesLeague = (selectedLeague === 'ALL') || sport.includes(selectedLeague);
 
-                return matchesKeyword && matchesDate;
+                return matchesKeyword && matchesDate && matchesLeague;
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp!</div>`;
+                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp trong giải này!</div>`;
                 return;
             }
 
@@ -154,12 +171,17 @@
                 const chosenProb = isHomeBetter ? m.ai_home_prob : m.ai_away_prob;
                 const edgeVal = isHomeBetter ? m.edge_home : m.edge_away;
 
+                // Giữ nguyên logic hiển thị VIP Pick / Neutral Pick như bản gốc
+                const recommendationBadge = m.recommendation && m.recommendation.includes("VIP") 
+                    ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-md">⭐ ${m.recommendation}</span>`
+                    : `<span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">${m.recommendation || 'Neutral Pick'}</span>`;
+
                 return `
                     <div class="bg-cardBg border border-cardBorder rounded-2xl p-6 shadow-xl flex flex-col justify-between hover:border-emerald-500/40 transition-all">
                         <div>
                             <div class="flex justify-between items-center border-b border-cardBorder pb-4 mb-4">
                                 <span class="text-xs font-semibold text-slate-400">🏆 Giải: <strong class="text-cyan-400 uppercase">${m.sport}</strong> | 📅 ${m.commence_time} | Nhà cái: <strong class="text-white">${m.bookmaker}</strong></span>
-                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">${m.recommendation}</span>
+                                ${recommendationBadge}
                             </div>
                             <div class="flex justify-between items-center font-extrabold text-xl mb-5 text-white">
                                 <span>🏠 ${m.home_team} <span class="text-slate-500 font-normal text-base mx-2">vs</span> ✈️ ${m.away_team}</span>
