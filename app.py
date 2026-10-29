@@ -2,11 +2,10 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
-import json
+import sqlite3
 
 app = FastAPI(title="VMAH US Sports AI Backend")
 
-# Cấu hình CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,21 +14,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Trả về giao diện index.html khi truy cập trang chủ
 @app.get("/")
 def read_index():
     if os.path.exists("index.html"):
         return FileResponse("index.html")
-    return {"error": "index.html not found in server directory"}
+    return {"error": "index.html not found"}
 
-# API cung cấp toàn bộ danh sách kèo từ picks.json cho Frontend
 @app.get("/api/daily-picks")
 def get_daily_picks():
     try:
-        if os.path.exists("picks.json"):
-            with open("picks.json", "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return data
-        return []
+        db_path = "sports_bettor.db"
+        if not os.path.exists(db_path):
+            return []
+        
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # Lấy dữ liệu từ bảng picks (hoặc đổi tên bảng nếu database của bạn đặt tên khác)
+        cursor.execute("SELECT * FROM picks")
+        rows = cursor.fetchall()
+        conn.close()
+        
+        return [dict(row) for row in rows]
     except Exception as e:
         return {"error": str(e)}
