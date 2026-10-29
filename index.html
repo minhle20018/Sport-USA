@@ -141,7 +141,7 @@
                     matchesData = data;
                     filterMatches();
                 } else {
-                    document.getElementById('matchesContainer').innerHTML = `<div class="text-center py-16 text-amber-400 col-span-full text-lg">⚠️ File picks.json chưa có dữ liệu hoặc trống! Hãy chạy worker quét kèo.</div>`;
+                    document.getElementById('matchesContainer').innerHTML = `<div class="text-center py-16 text-amber-400 col-span-full text-lg">⚠️ Cơ sở dữ liệu hiện chưa có trận đấu nào! Hãy kiểm tra lại worker bot.</div>`;
                 }
             } catch (err) {
                 console.error("Lỗi kết nối Backend:", err);
