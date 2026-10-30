@@ -1,3 +1,26 @@
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+import os
+import sqlite3
+
+# KHAI BÁO BIẾN APP PHẢI ĐẶT Ở ĐÂY (TRƯỚC KHI DÙNG @app.get)
+app = FastAPI(title="VMAH US Sports AI Backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def read_index():
+    if os.path.exists("index.html"):
+        return FileResponse("index.html")
+    return {"error": "index.html not found"}
+
 @app.get("/api/daily-picks")
 def get_daily_picks():
     try:
@@ -9,14 +32,13 @@ def get_daily_picks():
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # Tự động tìm tên bảng đầu tiên có trong database
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
         tables = cursor.fetchall()
         if not tables:
             conn.close()
             return []
         
-        table_name = tables[0][0] # Lấy tên bảng đầu tiên
+        table_name = tables[0][0]
         cursor.execute(f"SELECT * FROM {table_name}")
         rows = cursor.fetchall()
         conn.close()
