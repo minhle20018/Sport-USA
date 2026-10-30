@@ -1,7 +1,2 @@
 fastapi
 uvicorn
-requests
-pandas
-numpy
-xgboost
-sqlalchemy
