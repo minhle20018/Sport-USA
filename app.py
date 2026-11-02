@@ -43,8 +43,6 @@ def get_daily_picks():
         rows = cursor.fetchall()
         conn.close()
         
-        # Múi giờ miền Đông nước Mỹ (ET): Chênh lệch UTC-5 (hoặc UTC-4 mùa hè)
-        # Ép chuẩn bù trừ -5 tiếng để quy đổi chính xác từ UTC sang giờ Mỹ
         us_offset = timedelta(hours=-5)
         us_tz = timezone(us_offset)
         
@@ -54,20 +52,31 @@ def get_daily_picks():
             commence_time = str(row_dict.get("commence_time", ""))
             
             try:
-                # Làm sạch chuỗi thời gian để parse an toàn
                 clean_time = commence_time.replace('Z', '+00:00')
                 dt = datetime.fromisoformat(clean_time)
-                
-                # Nếu database lưu giờ không có múi giờ, mặc định coi là UTC
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=timezone.utc)
-                
-                # Chuyển đổi sang múi giờ Mỹ (ET)
                 dt_us = dt.astimezone(us_tz)
                 row_dict["us_date"] = dt_us.strftime('%Y-%m-%d')
             except Exception:
-                # Fallback nếu chuỗi thời gian không theo chuẩn ISO
                 row_dict["us_date"] = commence_time[:10] if len(commence_time) >= 10 else ""
+            
+            # --- LOGIC TỰ ĐỘNG ĐỐI CHIẾU KẾT QUẢ WIN / LOSE ---
+            status = row_dict.get("status", "Scheduled")
+            home_score = row_dict.get("home_score")
+            away_score = row_dict.get("away_score")
+            
+            if status == "Finished" and home_score is not None and away_score is not None:
+                is_home_better = row_dict.get("ai_home_prob", 0) >= row_dict.get("ai_away_prob", 0)
+                predicted_winner = row_dict.get("home_team") if is_home_better else row_dict.get("away_team")
+                actual_winner = row_dict.get("home_team") if home_score > away_score else row_dict.get("away_team")
+                
+                if predicted_winner == actual_winner:
+                    row_dict["result_status"] = "WIN"
+                else:
+                    row_dict["result_status"] = "LOSE"
+            else:
+                row_dict["result_status"] = "PENDING"
                 
             result.append(row_dict)
             
