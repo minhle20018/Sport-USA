@@ -104,7 +104,6 @@
         let matchesData = [];
         let selectedLeague = 'ALL';
 
-        // Hàm tự động chuyển đổi sang giờ Mỹ (Eastern Time - ET)
         function formatUSTime(dateString) {
             if (!dateString) return "";
             try {
@@ -241,20 +240,21 @@
         }
 
         window.onload = function() {
-    const usDateStr = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/New_York',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    }).format(new Date());
+            const usDateStr = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'America/New_York',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(new Date());
 
-    const dateInput = document.getElementById('searchDate');
-    if (dateInput && !dateInput.value) {
-        dateInput.value = usDateStr;
-    }
+            const dateInput = document.getElementById('searchDate');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = usDateStr;
+            }
 
-    fetchLiveBackendData();
-    setInterval(fetchLiveBackendData, 300000);
-};
+            fetchLiveBackendData();
+            setInterval(fetchLiveBackendData, 300000);
+        };
+    </script>
 </body>
 </html>
