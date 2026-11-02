@@ -108,14 +108,18 @@
             if (!dateString) return "";
             try {
                 const date = new Date(dateString);
-                return date.toLocaleString('en-US', {
+                const datePart = date.toLocaleDateString('en-US', {
                     timeZone: 'America/New_York',
                     month: 'numeric',
-                    day: 'numeric',
+                    day: 'numeric'
+                });
+                const timePart = date.toLocaleTimeString('en-US', {
+                    timeZone: 'America/New_York',
                     hour: 'numeric',
                     minute: '2-digit',
                     hour12: true
-                }) + ' ET';
+                });
+                return `${datePart}, ${timePart} ET`;
             } catch (e) {
                 return dateString;
             }
@@ -179,7 +183,7 @@
 
                 const matchesKeyword = home.includes(keyword) || away.includes(keyword) || sport.toLowerCase().includes(keyword);
                 
-                // So khớp chính xác ngày theo múi giờ Mỹ (ET) để tránh lệch ngày
+                // So khớp chính xác ngày theo múi giờ Mỹ (America/New_York)
                 let matchesDate = true;
                 if (selectedDate && timeStr) {
                     try {
@@ -255,7 +259,7 @@
         }
 
         window.onload = function() {
-            // Tự động set ngày mặc định theo chuẩn giờ miền Đông nước Mỹ (America/New_York)
+            // Tự động khởi tạo ngày mặc định theo chuẩn múi giờ miền Đông nước Mỹ (America/New_York)
             const usDateStr = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'America/New_York',
                 year: 'numeric',
