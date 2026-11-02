@@ -49,17 +49,19 @@ def get_processed_picks():
         row_dict = dict(row)
         commence_time = str(row_dict.get("commence_time", ""))
           
-        try:
-            clean_time = commence_time.replace('Z', '+00:00')
-            dt = datetime.fromisoformat(clean_time)
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            dt_us = dt.astimezone(us_tz)
-            row_dict["us_date"] = dt_us.strftime('%Y-%m-%d')
-        except Exception:
-            row_dict["us_date"] = commence_time[:10] if len(commence_time) >= 10 else ""
+        # Đảm bảo us_date luôn được map chính xác nếu DB chưa có sẵn
+        if not row_dict.get("us_date"):
+            try:
+                clean_time = commence_time.replace('Z', '+00:00')
+                dt = datetime.fromisoformat(clean_time)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                dt_us = dt.astimezone(us_tz)
+                row_dict["us_date"] = dt_us.strftime('%Y-%m-%d')
+            except Exception:
+                row_dict["us_date"] = commence_time[:10] if len(commence_time) >= 10 else ""
           
-        # Logic tự động đối chiếu kết quả WIN / LOSE
+        # Logic tính toán kết quả WIN / LOSE
         status = row_dict.get("status", "Scheduled")
         home_score = row_dict.get("home_score")
         away_score = row_dict.get("away_score")
