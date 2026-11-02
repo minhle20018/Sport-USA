@@ -4,21 +4,21 @@ import pandas as pd
 import numpy as np
 import random
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from xgboost import XGBClassifier
 
-# --- CẤU HÌNH TẤT CẢ CÁC GIẢI ĐẤU NƯỚC MỸ ---
 API_KEY = "4040e37f309c55a5444d0aa59e9bd132"
 US_SPORTS = [
-    "basketball_nba",         # NBA
-    "americanfootball_nfl", # NFL
-    "baseball_mlb",           # MLB
-    "icehockey_nhl",          # NHL
-    "basketball_ncaab",     # Bóng rổ sinh viên Mỹ
-    "soccer_usa_mls"          # MLS
+    "basketball_nba",
+    "americanfootball_nfl",
+    "baseball_mlb",
+    "icehockey_nhl",
+    "basketball_ncaab",
+    "soccer_usa_mls"
 ]
 REGIONS = "us"
 DATABASE_URL = "sqlite:///sports_bettor.db"
@@ -35,6 +35,7 @@ class MatchPrediction(Base):
     home_team = Column(String)
     away_team = Column(String)
     commence_time = Column(DateTime)
+    us_date = Column(String)
     bookmaker = Column(String)
     home_odds = Column(Float)
     away_odds = Column(Float)
@@ -68,10 +69,10 @@ ai_model = train_xgboost_model()
 
 def fetch_and_process_odds():
     session = SessionLocal()
+    ny_tz = pytz.timezone('America/New_York')
     
-    # 1. Quét tỷ lệ kèo từ The Odds API (H2H và Totals)
     for sport in US_SPORTS:
-        print(f"[{datetime.utcnow()}] 🇺🇸 Đang quét dữ liệu giải: {sport}...")
+        print(f"[{datetime.now()}] 🇺🇸 Đang tự động quét toàn diện giải: {sport}...")
         url = f"https://api.the-odds-api.com/v4/sports/{sport}/odds/"
         params = {
             "apiKey": API_KEY,
@@ -82,14 +83,16 @@ def fetch_and_process_odds():
         
         response = requests.get(url, params=params)
         if response.status_code != 200:
-            print(f"⚠️ Không thể lấy dữ liệu giải {sport}: {response.status_code}")
             continue
 
         matches = response.json()
         for match in matches:
             home_team = match["home_team"]
             away_team = match["away_team"]
-            commence_time = datetime.strptime(match["commence_time"], "%Y-%m-%dT%H:%M:%SZ")
+            
+            commence_utc = datetime.strptime(match["commence_time"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=pytz.utc)
+            commence_ny = commence_utc.astimezone(ny_tz)
+            us_date_str = commence_ny.strftime("%Y-%m-%d")
             
             bookmakers = match.get("bookmakers", [])
             if not bookmakers:
@@ -99,7 +102,7 @@ def fetch_and_process_odds():
             markets = bookmakers[0].get("markets", [])
             
             home_odds, away_odds = 0.0, 0.0
-            ou_line = None # Bắt buộc lấy chuẩn từ nhà cái, không dùng số cứng
+            ou_line = None
             
             for market in markets:
                 if market["key"] == "h2h":
@@ -117,7 +120,6 @@ def fetch_and_process_odds():
             if home_odds == 0 or away_odds == 0 or ou_line is None:
                 continue
                 
-            # Dự đoán AI (Moneyline)
             features = np.array([[2.5, 0.01, 1]])
             probabilities = ai_model.predict_proba(features)[0]
             ai_home_prob, ai_away_prob = float(probabilities[1]), float(probabilities[0])
@@ -134,7 +136,6 @@ def fetch_and_process_odds():
             elif ai_away_prob > 0.58 and edge_away > 0.03:
                 recommendation = f"⭐ VIP PICK: {away_team}"
                 
-            # Dự đoán Tài/Xỉu dựa trên ou_line thực tế của nhà cái
             random.seed(home_team + away_team)
             ai_predicted_total = round(ou_line + random.uniform(-1.5, 1.5), 1)
             
@@ -146,9 +147,9 @@ def fetch_and_process_odds():
             else:
                 ou_recommendation = f"⚖️ CÂN BẰNG (PASS) {ou_line}"
 
-            db_record = session.query(MatchPrediction).filter_by(home_team=home_team, away_team=away_team).first()
+            # Dùng cơ chế tích lũy: kiểm tra trận theo cặp đội và ngày thay vì ghi đè mất dữ liệu ngày khác
+            db_record = session.query(MatchPrediction).filter_by(home_team=home_team, away_team=away_team, us_date=us_date_str).first()
             if db_record:
-                db_record.sport = sport
                 db_record.home_odds = home_odds
                 db_record.away_odds = away_odds
                 db_record.ai_home_prob = ai_home_prob
@@ -165,7 +166,8 @@ def fetch_and_process_odds():
                     sport=sport,
                     home_team=home_team,
                     away_team=away_team,
-                    commence_time=commence_time,
+                    commence_time=commence_utc,
+                    us_date=us_date_str,
                     bookmaker=bookmaker_title,
                     home_odds=home_odds,
                     away_odds=away_odds,
@@ -181,13 +183,10 @@ def fetch_and_process_odds():
                 )
                 session.add(new_record)
                 
-    # 2. Tự động lấy kết quả (Scores) từ The Odds API để chấm điểm thực tế
+    # Tự động đồng bộ kết quả (Scores) để chấm điểm Win/Lose
     for sport in US_SPORTS:
         scores_url = f"https://api.the-odds-api.com/v4/sports/{sport}/scores/"
-        scores_params = {
-            "apiKey": API_KEY,
-            "daysFrom": 2 
-        }
+        scores_params = {"apiKey": API_KEY, "daysFrom": 3}
         scores_resp = requests.get(scores_url, params=scores_params)
         if scores_resp.status_code == 200:
             scores_data = scores_resp.json()
@@ -205,19 +204,17 @@ def fetch_and_process_odds():
                                 away_score = int(s["score"])
                         
                         if home_score is not None and away_score is not None:
-                            db_match = session.query(MatchPrediction).filter_by(home_team=home_team, away_team=away_team).first()
-                            if db_match:
+                            db_matches = session.query(MatchPrediction).filter_by(home_team=home_team, away_team=away_team).all()
+                            for db_match in db_matches:
                                 db_match.status = "Finished"
                                 db_match.home_score = home_score
                                 db_match.away_score = away_score
                                 
-                                # Chấm điểm Moneyline
                                 is_home_better = db_match.ai_home_prob >= db_match.ai_away_prob
                                 predicted_winner = db_match.home_team if is_home_better else db_match.away_team
                                 actual_winner = db_match.home_team if home_score > away_score else db_match.away_team
                                 db_match.result_status = "WIN" if predicted_winner == actual_winner else "LOSE"
 
-                                # Chấm điểm Tài/Xỉu
                                 actual_total = home_score + away_score
                                 if db_match.ou_line:
                                     ai_rec = db_match.ou_recommendation or ""
@@ -228,14 +225,13 @@ def fetch_and_process_odds():
 
     session.commit()
     session.close()
-    print(f"[{datetime.utcnow()}] ✅ Đã quét dữ liệu và chấm điểm kết quả thành công!")
+    print(f"[{datetime.now()}] ✅ Hoàn tất vòng lặp quét và lưu trữ dữ liệu tự động!")
 
 if __name__ == "__main__":
-    print("🚀 Bot quét đa giải đấu Mỹ và cập nhật kết quả tự động đã khởi động...")
+    print("🚀 Hệ thống VMAH AI Worker Bot đang chạy ngầm tự động 24/7...")
     while True:
         try:
             fetch_and_process_odds()
         except Exception as e:
             print(f"❌ Lỗi: {e}")
-        print("⏳ Đang chờ lần quét tiếp theo sau 30 phút...")
-        time.sleep(1800)
+        time.sleep(1800) # Cứ 30 phút quét và tích lũy dữ liệu một lần

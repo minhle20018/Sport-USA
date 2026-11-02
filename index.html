@@ -254,8 +254,14 @@
                 const matchesKeyword = home.includes(keyword) || away.includes(keyword) || sport.toLowerCase().includes(keyword);
                 
                 let matchesDate = true;
-                if (selectedDate && m.us_date) {
-                    matchesDate = (m.us_date === selectedDate);
+                if (selectedDate && m.commence_time) {
+                    const matchNYDate = new Intl.DateTimeFormat('en-CA', {
+                        timeZone: 'America/New_York',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    }).format(new Date(m.commence_time));
+                    matchesDate = (matchNYDate === selectedDate);
                 }
                 
                 let matchesLeague = true;
