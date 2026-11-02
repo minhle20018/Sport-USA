@@ -178,7 +178,22 @@
                 const sport = (m.sport || "").toUpperCase();
 
                 const matchesKeyword = home.includes(keyword) || away.includes(keyword) || sport.toLowerCase().includes(keyword);
-                const matchesDate = selectedDate ? timeStr.includes(selectedDate) : true;
+                
+                // So khớp chính xác ngày theo múi giờ Mỹ (ET) để tránh lệch ngày
+                let matchesDate = true;
+                if (selectedDate && timeStr) {
+                    try {
+                        const matchDateUS = new Intl.DateTimeFormat('en-CA', {
+                            timeZone: 'America/New_York',
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                        }).format(new Date(timeStr));
+                        matchesDate = (matchDateUS === selectedDate);
+                    } catch (e) {
+                        matchesDate = timeStr.includes(selectedDate);
+                    }
+                }
                 
                 let matchesLeague = true;
                 if (selectedLeague !== 'ALL') {
@@ -197,7 +212,7 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp!</div>`;
+                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp trong ngày này!</div>`;
                 return;
             }
 
@@ -240,7 +255,7 @@
         }
 
         window.onload = function() {
-            // Luôn lấy chính xác ngày hiện tại theo múi giờ miền Đông nước Mỹ (America/New_York)
+            // Tự động set ngày mặc định theo chuẩn giờ miền Đông nước Mỹ (America/New_York)
             const usDateStr = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'America/New_York',
                 year: 'numeric',
@@ -250,7 +265,7 @@
 
             const dateInput = document.getElementById('searchDate');
             if (dateInput) {
-                dateInput.value = usDateStr; // Cố định luôn ô ngày theo giờ Mỹ
+                dateInput.value = usDateStr;
             }
 
             fetchLiveBackendData();
