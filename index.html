@@ -179,9 +179,9 @@
 
                 const matchesKeyword = home.includes(keyword) || away.includes(keyword) || sport.toLowerCase().includes(keyword);
                 
-                // So khớp trực tiếp trường us_date đã được Backend chuẩn hóa theo giờ Mỹ
+                // So khớp trực tiếp trường us_date (YYYY-MM-DD) do backend cung cấp
                 let matchesDate = true;
-                if (selectedDate) {
+                if (selectedDate && m.us_date) {
                     matchesDate = (m.us_date === selectedDate);
                 }
                 
@@ -245,7 +245,6 @@
         }
 
         window.onload = function() {
-            // Khởi tạo ô tìm kiếm ngày tự động nhận chuẩn múi giờ Mỹ (America/New_York)
             const usDateStr = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'America/New_York',
                 year: 'numeric',
