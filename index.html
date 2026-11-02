@@ -104,22 +104,20 @@
         let matchesData = [];
         let selectedLeague = 'ALL';
 
+        // Hàm định dạng thời gian chuẩn Mỹ dựa trên Intl.DateTimeFormat với timeZone
         function formatUSTime(dateString) {
             if (!dateString) return "";
             try {
                 const date = new Date(dateString);
-                const datePart = date.toLocaleDateString('en-US', {
+                const formatter = new Intl.DateTimeFormat('en-US', {
                     timeZone: 'America/New_York',
                     month: 'numeric',
-                    day: 'numeric'
-                });
-                const timePart = date.toLocaleTimeString('en-US', {
-                    timeZone: 'America/New_York',
+                    day: 'numeric',
                     hour: 'numeric',
                     minute: '2-digit',
                     hour12: true
                 });
-                return `${datePart}, ${timePart} ET`;
+                return formatter.format(date) + ' ET';
             } catch (e) {
                 return dateString;
             }
@@ -259,7 +257,6 @@
         }
 
         window.onload = function() {
-            // Tự động khởi tạo ngày mặc định theo chuẩn múi giờ miền Đông nước Mỹ (America/New_York)
             const usDateStr = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'America/New_York',
                 year: 'numeric',
