@@ -51,6 +51,12 @@
                     </div>
                 </div>
 
+                <!-- Nút chuyển ngôn ngữ VI / EN -->
+                <div class="flex items-center space-x-1.5 bg-slate-900 p-1 rounded-xl border border-cardBorder">
+                    <button onclick="setLanguage('vi')" id="lang-vi" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white transition-all">VI</button>
+                    <button onclick="setLanguage('en')" id="lang-en" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 transition-all">EN</button>
+                </div>
+
                 <button onclick="fetchLiveData()" class="p-3 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all shadow-md" title="Refresh"><i class="fa-solid fa-arrows-rotate"></i></button>
             </div>
         </div>
@@ -60,38 +66,38 @@
     <main class="flex-grow w-full px-6 py-8">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 bg-cardBg/40 border border-cardBorder p-6 rounded-2xl shadow-xl gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold text-white mb-1">Kèo Thể Thao Mỹ & Dự Đoán AI</h1>
-                <p class="text-slate-400 text-base">Hệ thống phân tích tự động toàn diện các giải đấu nước Mỹ</p>
+                <h1 class="text-3xl font-extrabold text-white mb-1" data-i18n="picksTitle">Kèo Thể Thao Mỹ & Dự Đoán AI</h1>
+                <p class="text-slate-400 text-base" data-i18n="picksSubtitle">Hệ thống phân tích tự động toàn diện các giải đấu nước Mỹ</p>
             </div>
             <span class="px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold border border-emerald-500/30 shadow-md">🟢 Live API Connected (Render Cloud)</span>
         </div>
 
-        <!-- BẢNG THỐNG KÊ HIỆU SUẤT AI (WIN/LOSE DASHBOARD) -->
+        <!-- BẢNG THỐNG KÊ HIỆU SUẤT AI (WIN/LOSS DASHBOARD) -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div class="bg-cardBg border border-cardBorder rounded-2xl p-5 shadow-xl flex items-center justify-between">
                 <div>
-                    <span class="text-xs uppercase font-bold text-slate-400 block mb-1">🏆 Tổng trận đã chấm</span>
+                    <span class="text-xs uppercase font-bold text-slate-400 block mb-1" data-i18n="statTotal">🏆 Tổng trận đã chấm</span>
                     <span id="stat-total" class="text-2xl font-black text-white">0</span>
                 </div>
                 <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl border border-blue-500/20"><i class="fa-solid fa-receipt"></i></div>
             </div>
             <div class="bg-cardBg border border-cardBorder rounded-2xl p-5 shadow-xl flex items-center justify-between">
                 <div>
-                    <span class="text-xs uppercase font-bold text-slate-400 block mb-1">✅ Thắng (Wins)</span>
+                    <span class="text-xs uppercase font-bold text-slate-400 block mb-1" data-i18n="statWins">✅ Thắng (Wins)</span>
                     <span id="stat-wins" class="text-2xl font-black text-green-400">0</span>
                 </div>
                 <div class="w-12 h-12 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center text-xl border border-green-500/20"><i class="fa-solid fa-check-circle"></i></div>
             </div>
             <div class="bg-cardBg border border-cardBorder rounded-2xl p-5 shadow-xl flex items-center justify-between">
                 <div>
-                    <span class="text-xs uppercase font-bold text-slate-400 block mb-1">❌ Thua (Losses)</span>
+                    <span class="text-xs uppercase font-bold text-slate-400 block mb-1" data-i18n="statLosses">❌ Thua (Losses)</span>
                     <span id="stat-losses" class="text-2xl font-black text-red-400">0</span>
                 </div>
                 <div class="w-12 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center text-xl border border-red-500/20"><i class="fa-solid fa-times-circle"></i></div>
             </div>
             <div class="bg-cardBg border border-cardBorder rounded-2xl p-5 shadow-xl flex items-center justify-between">
                 <div>
-                    <span class="text-xs uppercase font-bold text-slate-400 block mb-1">📈 Tỷ lệ thắng (Win Rate)</span>
+                    <span class="text-xs uppercase font-bold text-slate-400 block mb-1" data-i18n="statWinRate">📈 Tỷ lệ thắng (Win Rate)</span>
                     <span id="stat-winrate" class="text-2xl font-black text-cyan-400">0.0%</span>
                 </div>
                 <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl border border-cyan-500/20"><i class="fa-solid fa-chart-line"></i></div>
@@ -100,7 +106,7 @@
 
         <!-- LEAGUE TABS -->
         <div class="flex flex-wrap items-center gap-2 mb-8" id="leagueTabs">
-            <button onclick="filterByLeague('ALL')" id="tab-ALL" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-white shadow-lg transition-all">🌟 Tất cả giải đấu</button>
+            <button onclick="filterByLeague('ALL')" id="tab-ALL" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-emerald-500 text-white shadow-lg transition-all" data-i18n="tabAll">🌟 Tất cả giải đấu</button>
             <button onclick="filterByLeague('NBA')" id="tab-NBA" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🏀 NBA</button>
             <button onclick="filterByLeague('NCAAB')" id="tab-NCAAB" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🎓 NCAA Basketball</button>
             <button onclick="filterByLeague('NFL')" id="tab-NFL" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-slate-300 border border-cardBorder hover:border-emerald-500 transition-all">🏈 NFL</button>
@@ -123,8 +129,63 @@
 
     <!-- Script Logic -->
     <script>
+        const i18n = {
+            vi: {
+                picksTitle: "Kèo Thể Thao Mỹ & Dự Đoán AI",
+                picksSubtitle: "Hệ thống phân tích tự động toàn diện các giải đấu nước Mỹ",
+                searchPlaceholder: "Tìm tên đội...",
+                statTotal: "🏆 Tổng trận đã chấm",
+                statWins: "✅ Thắng (Wins)",
+                statLosses: "❌ Thua (Losses)",
+                statWinRate: "📈 Tỷ lệ thắng (Win Rate)",
+                tabAll: "🌟 Tất cả giải đấu",
+                pending: "⏳ Đang chờ kết quả",
+                winBadge: "✅ THẮNG KÈO (WIN)",
+                loseBadge: "❌ THUA KÈO (LOSE)",
+                moneylineTitle: "🎯 KÈO ĐỘI THẮNG (MONEYLINE)",
+                ouTitle: "📊 KÈO TÀI XỈU (OVER/UNDER)",
+                aiProb: "Xác suất AI:",
+                bookmakerOdds: "Mức nhà cái:",
+                aiPred: "AI Dự đoán:",
+                scoreText: "Tỷ số:"
+            },
+            en: {
+                picksTitle: "US Sports Value Bets & AI Predictions",
+                picksSubtitle: "Automated multi-league analysis across US sports",
+                searchPlaceholder: "Search team...",
+                statTotal: "🏆 Total Settled",
+                statWins: "✅ Wins",
+                statLosses: "❌ Losses",
+                statWinRate: "📈 Win Rate",
+                tabAll: "🌟 All Leagues",
+                pending: "⏳ Pending Result",
+                winBadge: "✅ WIN",
+                loseBadge: "❌ LOSE",
+                moneylineTitle: "🎯 MONEYLINE PICK",
+                ouTitle: "📊 OVER/UNDER PICK",
+                aiProb: "AI Probability:",
+                bookmakerOdds: "Bookmaker Line:",
+                aiPred: "AI Prediction:",
+                scoreText: "Score:"
+            }
+        };
+
+        let currentLang = 'vi';
         let matchesData = [];
         let selectedLeague = 'ALL';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('lang-vi').className = lang === 'vi' ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white transition-all' : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 transition-all';
+            document.getElementById('lang-en').className = lang === 'en' ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white transition-all' : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 transition-all';
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(i18n[currentLang][key]) el.innerText = i18n[currentLang][key];
+            });
+            document.getElementById('searchInput').placeholder = i18n[currentLang].searchPlaceholder;
+            filterMatches();
+        }
 
         function formatUSTime(dateString) {
             if (!dateString) return "";
@@ -161,12 +222,10 @@
 
         async function fetchLiveData() {
             try {
-                // 1. Lấy danh sách trận đấu
-                const resMatches = await fetch('https://vmah-sports-ai.onrender.com/api/daily-picks');
+                const resMatches = await fetch('/api/daily-picks');
                 matchesData = await resMatches.json();
                 
-                // 2. Lấy thống kê Thắng/Thua
-                const resStats = await fetch('https://vmah-sports-ai.onrender.com/api/stats').catch(() => null);
+                const resStats = await fetch('/api/stats').catch(() => null);
                 if (resStats && resStats.ok) {
                     const stats = await resStats.json();
                     document.getElementById('stat-total').innerText = stats.total_settled;
@@ -185,6 +244,7 @@
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             const selectedDate = document.getElementById('searchDate').value;
             const container = document.getElementById('matchesContainer');
+            const langDict = i18n[currentLang];
             
             const filtered = matchesData.filter(m => {
                 const home = (m.home_team || "").toLowerCase();
@@ -228,13 +288,13 @@
                 const edgeVal = isHomeBetter ? m.edge_home : m.edge_away;
 
                 const statusBadge = m.result_status === 'WIN' 
-                    ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30 shadow-md">✅ THẮNG KÈO (WIN)</span>`
+                    ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30 shadow-md">${langDict.winBadge}</span>`
                     : m.result_status === 'LOSE'
-                    ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 shadow-md">❌ THUA KÈO (LOSE)</span>`
-                    : `<span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">⏳ Đang chờ kết quả</span>`;
+                    ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 shadow-md">${langDict.loseBadge}</span>`
+                    : `<span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">${langDict.pending}</span>`;
 
                 const scoreDisplay = (m.home_score !== null && m.away_score !== null && m.status === 'Finished')
-                    ? `<span class="text-cyan-400 ml-2 font-mono text-base">[ Tỷ số: ${m.home_score} - ${m.away_score} ]</span>`
+                    ? `<span class="text-cyan-400 ml-2 font-mono text-base">[ ${langDict.scoreText} ${m.home_score} - ${m.away_score} ]</span>`
                     : '';
 
                 return `
@@ -250,14 +310,14 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
                             <div class="bg-slate-900/80 p-4 rounded-xl border border-cardBorder shadow-inner">
-                                <span class="text-[11px] uppercase font-bold text-slate-400 block mb-1.5">🎯 KÈO ĐỘI THẮNG (MONEYLINE)</span>
+                                <span class="text-[11px] uppercase font-bold text-slate-400 block mb-1.5">${langDict.moneylineTitle}</span>
                                 <div class="text-emerald-400 font-bold text-base">${chosenTeam}</div>
-                                <div class="text-xs text-slate-300 mt-1.5">Xác suất AI: <strong>${(chosenProb * 100).toFixed(1)}%</strong> | Edge: <span class="${edgeVal >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">${edgeVal >= 0 ? '+' : ''}${(edgeVal * 100).toFixed(1)}%</span></div>
+                                <div class="text-xs text-slate-300 mt-1.5">${langDict.aiProb} <strong>${(chosenProb * 100).toFixed(1)}%</strong> | Edge: <span class="${edgeVal >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">${edgeVal >= 0 ? '+' : ''}${(edgeVal * 100).toFixed(1)}%</span></div>
                             </div>
                             <div class="bg-slate-900/80 p-4 rounded-xl border border-cardBorder shadow-inner">
-                                <span class="text-[11px] uppercase font-bold text-slate-400 block mb-1.5">📊 KÈO TÀI XỈU (OVER/UNDER)</span>
+                                <span class="text-[11px] uppercase font-bold text-slate-400 block mb-1.5">${langDict.ouTitle}</span>
                                 <div class="text-cyan-400 font-bold text-base">${m.ou_recommendation}</div>
-                                <div class="text-xs text-slate-300 mt-1.5">Mức nhà cái: <strong>${m.ou_line}</strong> | AI Dự đoán: <strong>${m.ai_predicted_total}</strong></div>
+                                <div class="text-xs text-slate-300 mt-1.5">${langDict.bookmakerOdds} <strong>${m.ou_line}</strong> | ${langDict.aiPred} <strong>${m.ai_predicted_total}</strong></div>
                             </div>
                         </div>
                     </div>
