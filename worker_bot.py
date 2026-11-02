@@ -13,12 +13,12 @@ from xgboost import XGBClassifier
 # --- CẤU HÌNH TẤT CẢ CÁC GIẢI ĐẤU NƯỚC MỸ ---
 API_KEY = "4040e37f309c55a5444d0aa59e9bd132"
 US_SPORTS = [
-    "basketball_nba",       # NBA
+    "basketball_nba",         # NBA
     "americanfootball_nfl", # NFL
-    "baseball_mlb",         # MLB
-    "icehockey_nhl",        # NHL
+    "baseball_mlb",           # MLB
+    "icehockey_nhl",          # NHL
     "basketball_ncaab",     # Bóng rổ sinh viên Mỹ
-    "soccer_usa_mls"        # MLS
+    "soccer_usa_mls"          # MLS
 ]
 REGIONS = "us"
 DATABASE_URL = "sqlite:///sports_bettor.db"
@@ -46,6 +46,12 @@ class MatchPrediction(Base):
     ou_line = Column(Float)
     ai_predicted_total = Column(Float)
     ou_recommendation = Column(String)
+    
+    # --- BỔ SUNG CÁC CỘT LƯU KẾT QUẢ THỰC TẾ ---
+    status = Column(String, default="Scheduled") # Scheduled hoặc Finished
+    home_score = Column(Integer, nullable=True)
+    away_score = Column(Integer, nullable=True)
+    
     updated_at = Column(DateTime, default=datetime.utcnow)
 
 Base.metadata.create_all(bind=engine)
@@ -62,7 +68,7 @@ ai_model = train_xgboost_model()
 def fetch_and_process_odds():
     session = SessionLocal()
     
-    # Duyệt qua tất cả các giải đấu ở Mỹ
+    # 1. Quét tỷ lệ kèo từ The Odds API
     for sport in US_SPORTS:
         print(f"[{datetime.utcnow}] 🇺🇸 Đang quét dữ liệu giải: {sport}...")
         url = f"https://api.the-odds-api.com/v4/sports/{sport}/odds/"
@@ -118,7 +124,6 @@ def fetch_and_process_odds():
             elif ai_away_prob > 0.58 and edge_away > 0.03:
                 recommendation = f"⭐ VIP PICK: {away_team}"
                 
-            # Thuật toán Tài Xỉu linh hoạt
             ou_line = 215.5
             random.seed(home_team + away_team)
             ai_predicted_total = round(ou_line + random.uniform(-5.0, 5.0), 1)
@@ -161,16 +166,48 @@ def fetch_and_process_odds():
                     recommendation=recommendation,
                     ou_line=ou_line,
                     ai_predicted_total=ai_predicted_total,
-                    ou_recommendation=ou_recommendation
+                    ou_recommendation=ou_recommendation,
+                    status="Scheduled"
                 )
                 session.add(new_record)
                 
+    # 2. Tự động lấy kết quả (Scores) từ The Odds API để cập nhật tỷ số thực tế
+    for sport in US_SPORTS:
+        scores_url = f"https://api.the-odds-api.com/v4/sports/{sport}/scores/"
+        scores_params = {
+            "apiKey": API_KEY,
+            "daysFrom": 1 # Lấy kết quả trong vòng 1 ngày qua
+        }
+        scores_resp = requests.get(scores_url, params=scores_params)
+        if scores_resp.status_code == 200:
+            scores_data = scores_resp.json()
+            for match in scores_data:
+                if match.get("completed", False):
+                    home_team = match["home_team"]
+                    away_team = match["away_team"]
+                    scores = match.get("scores", [])
+                    if scores and len(scores) >= 2:
+                        home_score, away_score = None, None
+                        for s in scores:
+                            if s["name"] == home_team:
+                                home_score = int(s["score"])
+                            elif s["name"] == away_team:
+                                away_score = int(s["score"])
+                        
+                        if home_score is not None and away_score is not None:
+                            # Cập nhật vào Database
+                            db_match = session.query(MatchPrediction).filter_by(home_team=home_team, away_team=away_team).first()
+                            if db_match:
+                                db_match.status = "Finished"
+                                db_match.home_score = home_score
+                                db_match.away_score = away_score
+
     session.commit()
     session.close()
-    print(f"[{datetime.utcnow}] ✅ Đã quét xong toàn bộ các giải đấu thể thao Mỹ!")
+    print(f"[{datetime.utcnow}] ✅ Đã quét và cập nhật tỷ số xong toàn bộ giải đấu Mỹ!")
 
 if __name__ == "__main__":
-    print("🚀 Bot quét đa giải đấu Mỹ đã khởi động ngầm...")
+    print("🚀 Bot quét đa giải đấu Mỹ và cập nhật kết quả tự động đã khởi động...")
     while True:
         try:
             fetch_and_process_odds()
