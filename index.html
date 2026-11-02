@@ -241,9 +241,20 @@
         }
 
         window.onload = function() {
-            fetchLiveBackendData();
-            setInterval(fetchLiveBackendData, 300000);
-        };
-    </script>
+    const usDateStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/New_York',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(new Date());
+
+    const dateInput = document.getElementById('searchDate');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = usDateStr;
+    }
+
+    fetchLiveBackendData();
+    setInterval(fetchLiveBackendData, 300000);
+};
 </body>
 </html>
