@@ -240,6 +240,7 @@
         }
 
         window.onload = function() {
+            // Luôn lấy chính xác ngày hiện tại theo múi giờ miền Đông nước Mỹ (America/New_York)
             const usDateStr = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'America/New_York',
                 year: 'numeric',
@@ -248,8 +249,8 @@
             }).format(new Date());
 
             const dateInput = document.getElementById('searchDate');
-            if (dateInput && !dateInput.value) {
-                dateInput.value = usDateStr;
+            if (dateInput) {
+                dateInput.value = usDateStr; // Cố định luôn ô ngày theo giờ Mỹ
             }
 
             fetchLiveBackendData();
