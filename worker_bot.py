@@ -71,12 +71,12 @@ def fetch_and_process_odds():
     
     # 1. Quét tỷ lệ kèo từ The Odds API (H2H và Totals)
     for sport in US_SPORTS:
-        print(f"[{datetime.utcnow}] 🇺🇸 Đang quét dữ liệu giải: {sport}...")
+        print(f"[{datetime.utcnow()}] 🇺🇸 Đang quét dữ liệu giải: {sport}...")
         url = f"https://api.the-odds-api.com/v4/sports/{sport}/odds/"
         params = {
             "apiKey": API_KEY,
             "regions": REGIONS,
-            "markets": "h2h,totals", # Lấy cả Moneyline và Tài/Xỉu
+            "markets": "h2h,totals",
             "oddsFormat": "decimal"
         }
         
@@ -99,7 +99,7 @@ def fetch_and_process_odds():
             markets = bookmakers[0].get("markets", [])
             
             home_odds, away_odds = 0.0, 0.0
-            ou_line = None # Không dùng số cứng, bắt buộc lấy từ nhà cái
+            ou_line = None # Bắt buộc lấy chuẩn từ nhà cái, không dùng số cứng
             
             for market in markets:
                 if market["key"] == "h2h":
@@ -114,7 +114,6 @@ def fetch_and_process_odds():
                             ou_line = float(outcome["point"])
                             break
                     
-            # Nếu trận đấu không có đủ odds hoặc không có mốc O/U từ nhà cái thì bỏ qua
             if home_odds == 0 or away_odds == 0 or ou_line is None:
                 continue
                 
@@ -135,7 +134,7 @@ def fetch_and_process_odds():
             elif ai_away_prob > 0.58 and edge_away > 0.03:
                 recommendation = f"⭐ VIP PICK: {away_team}"
                 
-            # Dự đoán Tài/Xỉu dựa hoàn toàn trên ou_line thực tế của nhà cái
+            # Dự đoán Tài/Xỉu dựa trên ou_line thực tế của nhà cái
             random.seed(home_team + away_team)
             ai_predicted_total = round(ou_line + random.uniform(-1.5, 1.5), 1)
             
@@ -218,7 +217,7 @@ def fetch_and_process_odds():
                                 actual_winner = db_match.home_team if home_score > away_score else db_match.away_team
                                 db_match.result_status = "WIN" if predicted_winner == actual_winner else "LOSE"
 
-                                # Chấm điểm Tài/Xỉu dựa vào ou_line chuẩn của nhà cái
+                                # Chấm điểm Tài/Xỉu
                                 actual_total = home_score + away_score
                                 if db_match.ou_line:
                                     ai_rec = db_match.ou_recommendation or ""
@@ -229,7 +228,7 @@ def fetch_and_process_odds():
 
     session.commit()
     session.close()
-    print(f"[{datetime.utcnow}] ✅ Đã quét dữ liệu và chấm điểm kết quả thành công!")
+    print(f"[{datetime.utcnow()}] ✅ Đã quét dữ liệu và chấm điểm kết quả thành công!")
 
 if __name__ == "__main__":
     print("🚀 Bot quét đa giải đấu Mỹ và cập nhật kết quả tự động đã khởi động...")

@@ -186,12 +186,20 @@
                 
                 let matchesLeague = true;
                 if (selectedLeague !== 'ALL') {
-                    if (selectedLeague === 'MLS') {
-                        matchesLeague = sport.includes('MLS') || sport.includes('SOCCER');
+                    if (selectedLeague === 'NBA') {
+                        matchesLeague = sport.includes('NBA') || sport.includes('BASKETBALL_NBA');
                     } else if (selectedLeague === 'NCAAB') {
                         matchesLeague = sport.includes('NCAAB') || sport.includes('BASKETBALL_NCAA');
+                    } else if (selectedLeague === 'NFL') {
+                        matchesLeague = sport.includes('NFL') || sport.includes('AMERICANFOOTBALL_NFL');
                     } else if (selectedLeague === 'NCAAF') {
                         matchesLeague = sport.includes('NCAAF') || sport.includes('AMERICANFOOTBALL_NCAA');
+                    } else if (selectedLeague === 'NHL') {
+                        matchesLeague = sport.includes('NHL') || sport.includes('ICEHOCKEY');
+                    } else if (selectedLeague === 'MLB') {
+                        matchesLeague = sport.includes('MLB') || sport.includes('BASEBALL');
+                    } else if (selectedLeague === 'MLS') {
+                        matchesLeague = sport.includes('MLS') || sport.includes('SOCCER');
                     } else {
                         matchesLeague = sport.includes(selectedLeague);
                     }
@@ -201,7 +209,12 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="text-center py-16 text-slate-400 col-span-full text-lg">🔍 Không tìm thấy trận đấu phù hợp trong ngày này!</div>`;
+                container.innerHTML = `
+                    <div class="text-center py-16 text-slate-400 col-span-full text-lg bg-cardBg border border-cardBorder rounded-2xl p-8 shadow-xl">
+                        <i class="fa-solid fa-calendar-xmark text-4xl mb-3 text-amber-400 block"></i>
+                        Không tìm thấy trận đấu nào cho ngày <strong>${selectedDate}</strong> (${selectedLeague === 'ALL' ? 'Tất cả giải đấu' : selectedLeague})!<br>
+                        <span class="text-xs text-slate-500 mt-2 block">Mẹo: Hãy kiểm tra lại ngày hiển thị hoặc chọn "Tất cả giải đấu".</span>
+                    </div>`;
                 return;
             }
 
@@ -211,11 +224,7 @@
                 const chosenProb = isHomeBetter ? m.ai_home_prob : m.ai_away_prob;
                 const edgeVal = isHomeBetter ? m.edge_home : m.edge_away;
 
-                const recommendationBadge = m.recommendation && m.recommendation.includes("VIP") 
-                    ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-md">⭐ ${m.recommendation}</span>`
-                    : `<span class="px-3 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">${m.recommendation || 'Neutral Pick'}</span>`;
-
-                // Huy hiệu trạng thái WIN / LOSE hiển thị trực quan
+                // Huy hiệu trạng thái WIN / LOSE
                 const statusBadge = m.result_status === 'WIN' 
                     ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30 shadow-md">✅ THẮNG KÈO (WIN)</span>`
                     : m.result_status === 'LOSE'
@@ -241,7 +250,7 @@
                             <div class="bg-slate-900/80 p-4 rounded-xl border border-cardBorder shadow-inner">
                                 <span class="text-[11px] uppercase font-bold text-slate-400 block mb-1.5">🎯 KÈO ĐỘI THẮNG (MONEYLINE)</span>
                                 <div class="text-emerald-400 font-bold text-base">${chosenTeam}</div>
-                                <div class="text-xs text-slate-300 mt-1.5">Xác suất AI: <strong>${chosenProb}%</strong> | Edge: <span class="${edgeVal >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">${edgeVal >= 0 ? '+' : ''}${edgeVal}%</span></div>
+                                <div class="text-xs text-slate-300 mt-1.5">Xác suất AI: <strong>${(chosenProb * 100).toFixed(1)}%</strong> | Edge: <span class="${edgeVal >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">${edgeVal >= 0 ? '+' : ''}${(edgeVal * 100).toFixed(1)}%</span></div>
                             </div>
                             <div class="bg-slate-900/80 p-4 rounded-xl border border-cardBorder shadow-inner">
                                 <span class="text-[11px] uppercase font-bold text-slate-400 block mb-1.5">📊 KÈO TÀI XỈU (OVER/UNDER)</span>
