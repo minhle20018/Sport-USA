@@ -190,7 +190,11 @@
         function formatUSTime(dateString) {
             if (!dateString) return "";
             try {
-                const date = new Date(dateString);
+                let timeStr = dateString;
+                if (!timeStr.endsWith('Z') && !timeStr.includes('+') && !timeStr.includes('-', 10)) {
+                    timeStr += 'Z';
+                }
+                const date = new Date(timeStr);
                 const formatter = new Intl.DateTimeFormat('en-US', {
                     timeZone: 'America/New_York',
                     month: 'numeric',
@@ -255,12 +259,18 @@
                 
                 let matchesDate = true;
                 if (selectedDate && m.commence_time) {
+                    let timeStr = m.commence_time;
+                    if (!timeStr.endsWith('Z') && !timeStr.includes('+') && !timeStr.includes('-', 10)) {
+                        timeStr += 'Z';
+                    }
+
                     const matchNYDate = new Intl.DateTimeFormat('en-CA', {
                         timeZone: 'America/New_York',
                         year: 'numeric',
                         month: '2-digit',
                         day: '2-digit'
-                    }).format(new Date(m.commence_time));
+                    }).format(new Date(timeStr));
+                    
                     matchesDate = (matchNYDate === selectedDate);
                 }
                 
@@ -332,6 +342,7 @@
         }
 
         window.onload = function() {
+            // Khởi tạo ô chọn ngày theo múi giờ Mỹ (New York)
             const usDateStr = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'America/New_York',
                 year: 'numeric',

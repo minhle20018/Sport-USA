@@ -71,8 +71,9 @@ def fetch_and_process_odds():
     session = SessionLocal()
     ny_tz = pytz.timezone('America/New_York')
     
+    # 1. Quét lịch thi đấu và tỷ lệ kèo (Tích lũy dài hạn vào database theo chuẩn ngày Mỹ)
     for sport in US_SPORTS:
-        print(f"[{datetime.now()}] 🇺🇸 Đang tự động quét toàn diện giải: {sport}...")
+        print(f"[{datetime.now()}] 🇺🇸 Đang quét toàn diện giải: {sport}...")
         url = f"https://api.the-odds-api.com/v4/sports/{sport}/odds/"
         params = {
             "apiKey": API_KEY,
@@ -92,7 +93,7 @@ def fetch_and_process_odds():
             
             commence_utc = datetime.strptime(match["commence_time"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=pytz.utc)
             commence_ny = commence_utc.astimezone(ny_tz)
-            us_date_str = commence_ny.strftime("%Y-%m-%d")
+            us_date_str = commence_ny.strftime("%Y-%m-%d") # Ngày chuẩn theo giờ Mỹ (ET)
             
             bookmakers = match.get("bookmakers", [])
             if not bookmakers:
@@ -147,7 +148,6 @@ def fetch_and_process_odds():
             else:
                 ou_recommendation = f"⚖️ CÂN BẰNG (PASS) {ou_line}"
 
-            # Dùng cơ chế tích lũy: kiểm tra trận theo cặp đội và ngày thay vì ghi đè mất dữ liệu ngày khác
             db_record = session.query(MatchPrediction).filter_by(home_team=home_team, away_team=away_team, us_date=us_date_str).first()
             if db_record:
                 db_record.home_odds = home_odds
@@ -183,10 +183,10 @@ def fetch_and_process_odds():
                 )
                 session.add(new_record)
                 
-    # Tự động đồng bộ kết quả (Scores) để chấm điểm Win/Lose
+    # 2. Quét kết quả các trận đã qua (Mở rộng phạm vi 7 ngày trước để chấm điểm Win/Loss chính xác)
     for sport in US_SPORTS:
         scores_url = f"https://api.the-odds-api.com/v4/sports/{sport}/scores/"
-        scores_params = {"apiKey": API_KEY, "daysFrom": 3}
+        scores_params = {"apiKey": API_KEY, "daysFrom": 7}
         scores_resp = requests.get(scores_url, params=scores_params)
         if scores_resp.status_code == 200:
             scores_data = scores_resp.json()
@@ -225,7 +225,7 @@ def fetch_and_process_odds():
 
     session.commit()
     session.close()
-    print(f"[{datetime.now()}] ✅ Hoàn tất vòng lặp quét và lưu trữ dữ liệu tự động!")
+    print(f"[{datetime.now()}] ✅ Hoàn tất quét, tích lũy dữ liệu và đồng bộ kết quả lịch sử!")
 
 if __name__ == "__main__":
     print("🚀 Hệ thống VMAH AI Worker Bot đang chạy ngầm tự động 24/7...")
@@ -234,4 +234,4 @@ if __name__ == "__main__":
             fetch_and_process_odds()
         except Exception as e:
             print(f"❌ Lỗi: {e}")
-        time.sleep(1800) # Cứ 30 phút quét và tích lũy dữ liệu một lần
+        time.sleep(1800)
