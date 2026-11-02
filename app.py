@@ -3,8 +3,9 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import sqlite3
+from datetime import datetime
+import pytz
 
-# KHAI BÁO BIẾN APP PHẢI ĐẶT Ở ĐÂY (TRƯỚC KHI DÙNG @app.get)
 app = FastAPI(title="VMAH US Sports AI Backend")
 
 app.add_middleware(
@@ -43,6 +44,34 @@ def get_daily_picks():
         rows = cursor.fetchall()
         conn.close()
         
-        return [dict(row) for row in rows]
+        us_tz = pytz.timezone('America/New_York')
+        result = []
+        
+        for row in rows:
+            row_dict = dict(row)
+            commence_time = row_dict.get("commence_time")
+            
+            # Chuẩn hóa ngày giờ theo chuẩn Mỹ (America/New_York) ngay từ backend
+            if commence_time:
+                try:
+                    # Xử lý chuỗi ISO time
+                    clean_time = commence_time.replace('Z', '+00:00')
+                    dt = datetime.fromisoformat(clean_time)
+                    if dt.tzinfo is None:
+                        dt = pytz.utc.localize(dt)
+                    
+                    # Chuyển đổi sang múi giờ miền Đông nước Mỹ (ET)
+                    dt_us = dt.astimezone(us_tz)
+                    
+                    # Gán thêm trường ngày chuẩn theo giờ Mỹ (YYYY-MM-DD) để phía frontend lọc chính xác
+                    row_dict["us_date"] = dt_us.strftime('%Y-%m-%d')
+                except Exception:
+                    row_dict["us_date"] = str(commence_time)[:10]
+            else:
+                row_dict["us_date"] = ""
+                
+            result.append(row_dict)
+            
+        return result
     except Exception as e:
         return {"error": str(e)}

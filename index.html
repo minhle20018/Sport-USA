@@ -104,7 +104,6 @@
         let matchesData = [];
         let selectedLeague = 'ALL';
 
-        // Hàm định dạng thời gian chuẩn Mỹ dựa trên Intl.DateTimeFormat với timeZone
         function formatUSTime(dateString) {
             if (!dateString) return "";
             try {
@@ -170,31 +169,20 @@
 
         function filterMatches() {
             const keyword = document.getElementById('searchInput').value.toLowerCase();
-            const selectedDate = document.getElementById('searchDate').value;
+            const selectedDate = document.getElementById('searchDate').value; // Định dạng YYYY-MM-DD từ input date
             const container = document.getElementById('matchesContainer');
             
             const filtered = matchesData.filter(m => {
                 const home = (m.home_team || "").toLowerCase();
                 const away = (m.away_team || "").toLowerCase();
-                const timeStr = (m.commence_time || "");
                 const sport = (m.sport || "").toUpperCase();
 
                 const matchesKeyword = home.includes(keyword) || away.includes(keyword) || sport.toLowerCase().includes(keyword);
                 
-                // So khớp chính xác ngày theo múi giờ Mỹ (America/New_York)
+                // So khớp trực tiếp trường us_date đã được Backend chuẩn hóa theo giờ Mỹ
                 let matchesDate = true;
-                if (selectedDate && timeStr) {
-                    try {
-                        const matchDateUS = new Intl.DateTimeFormat('en-CA', {
-                            timeZone: 'America/New_York',
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit'
-                        }).format(new Date(timeStr));
-                        matchesDate = (matchDateUS === selectedDate);
-                    } catch (e) {
-                        matchesDate = timeStr.includes(selectedDate);
-                    }
+                if (selectedDate) {
+                    matchesDate = (m.us_date === selectedDate);
                 }
                 
                 let matchesLeague = true;
@@ -257,6 +245,7 @@
         }
 
         window.onload = function() {
+            // Khởi tạo ô tìm kiếm ngày tự động nhận chuẩn múi giờ Mỹ (America/New_York)
             const usDateStr = new Intl.DateTimeFormat('en-CA', {
                 timeZone: 'America/New_York',
                 year: 'numeric',
